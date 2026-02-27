@@ -1,0 +1,88 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: yoke-atc-controller
+rules:
+  # Access to the custom resource YokeFlight
+  - apiGroups:
+      - yoke.cd
+    resources:
+      - yokeflights
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - yoke.cd
+    resources:
+      - yokeflights/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - yoke.cd
+    resources:
+      - yokeflights/finalizers
+    verbs:
+      - update
+  # ConfigMaps - needed for fetching WASM modules from annotated ConfigMaps and general operations
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+  # Server-side apply: the controller may create/patch arbitrary resources produced by WASM modules
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  # Events for recording reconciliation outcomes
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  # Coordination leases for leader election
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: yoke-atc-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: yoke-atc-controller
+subjects:
+  - kind: ServiceAccount
+    name: yoke-atc-controller
+    namespace: yoke-system

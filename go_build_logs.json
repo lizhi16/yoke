@@ -1,0 +1,3 @@
+{
+  "go_mod_tidy": "go: errors parsing go.mod:\n/home/zl/vibe_coding/industrial_projects/claude_opus_4_6/yoke/go.mod:3: invalid go version '1.18.0': must match format 1.23\n"
+}

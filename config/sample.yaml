@@ -1,0 +1,34 @@
+---
+# Sample YokeFlight CR
+apiVersion: yoke.dev/v1alpha1
+kind: YokeFlight
+metadata:
+  name: sample-flight
+  namespace: default
+spec:
+  wasmURL: "https://example.com/releases/my-app-v1.0.0.wasm"
+  input:
+    replicas: 2
+    image: nginx:1.25
+    port: 8080
+  releaseRevision: 1
+---
+# Annotated ConfigMap carrying inline WASM module reference and input
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-flight-config
+  namespace: default
+  annotations:
+    yoke.dev/flight: "sample-flight"
+    yoke.dev/wasm-url: "https://example.com/releases/my-app-v1.0.0.wasm"
+    yoke.dev/release-revision: "1"
+  labels:
+    app.kubernetes.io/managed-by: yoke-atc
+data:
+  input.json: |
+    {
+      "replicas": 2,
+      "image": "nginx:1.25",
+      "port": 8080
+    }

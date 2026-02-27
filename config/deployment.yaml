@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yoke-atc-controller
+  namespace: yoke-system
+  labels:
+    app: yoke-atc-controller
+    app.kubernetes.io/name: yoke-atc-controller
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/part-of: yoke-atc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yoke-atc-controller
+  template:
+    metadata:
+      labels:
+        app: yoke-atc-controller
+        app.kubernetes.io/name: yoke-atc-controller
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/part-of: yoke-atc
+    spec:
+      serviceAccountName: yoke-atc-controller
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: controller
+          image: yoke-atc-controller:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /manager
+          ports:
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault

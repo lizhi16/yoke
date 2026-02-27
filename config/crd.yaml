@@ -1,0 +1,133 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: yokeflights.yoke.cd
+spec:
+  group: yoke.cd
+  names:
+    kind: YokeFlight
+    listKind: YokeFlightList
+    plural: yokeflights
+    singular: yokeflight
+    shortNames:
+      - yf
+      - flight
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: YokeFlight is the Schema for the yokeflights API. It represents a WASM-based flight that produces Kubernetes resources.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - wasmRef
+              properties:
+                wasmRef:
+                  type: string
+                  description: >-
+                    Reference to the WASM module. Can be an OCI image reference,
+                    an HTTP(S) URL, or a ConfigMap reference in the format
+                    configmap://<namespace>/<name>/<key>.
+                input:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                  description: >-
+                    Arbitrary input data passed to the WASM module at execution time.
+                namespace:
+                  type: string
+                  description: >-
+                    Target namespace for the resources produced by the flight.
+                    Defaults to the namespace of the YokeFlight resource.
+                serviceAccountName:
+                  type: string
+                  description: >-
+                    ServiceAccount to use for server-side apply of the produced resources.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: Current phase of the YokeFlight (e.g., Pending, Running, Ready, Failed).
+                  enum:
+                    - Pending
+                    - Running
+                    - Ready
+                    - Failed
+                message:
+                  type: string
+                  description: Human-readable message indicating details about the current status.
+                lastAppliedGeneration:
+                  type: integer
+                  format: int64
+                  description: The last observed generation that was successfully applied.
+                lastAppliedTime:
+                  type: string
+                  format: date-time
+                  description: Timestamp of the last successful apply.
+                resources:
+                  type: array
+                  description: List of resources managed by this flight.
+                  items:
+                    type: object
+                    properties:
+                      group:
+                        type: string
+                      version:
+                        type: string
+                      kind:
+                        type: string
+                      namespace:
+                        type: string
+                      name:
+                        type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                  description: The most recent generation observed by the controller.
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - type
+                      - status
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+        - name: WasmRef
+          type: string
+          jsonPath: .spec.wasmRef
+          priority: 1
